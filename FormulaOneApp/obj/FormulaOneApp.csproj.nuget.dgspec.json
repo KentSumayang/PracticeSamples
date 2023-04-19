@@ -70,6 +70,10 @@
               "target": "Package",
               "version": "[7.0.5, )"
             },
+            "RestSharp": {
+              "target": "Package",
+              "version": "[110.2.0, )"
+            },
             "SQLite": {
               "target": "Package",
               "version": "[3.13.0, )"
