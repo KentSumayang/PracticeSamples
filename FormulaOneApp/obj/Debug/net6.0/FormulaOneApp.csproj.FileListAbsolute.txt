@@ -126,3 +126,4 @@ C:\Users\SUMAYANG\source\repos\FormulaOneApp\bin\Debug\net6.0\Microsoft.AspNetCo
 C:\Users\SUMAYANG\source\repos\FormulaOneApp\bin\Debug\net6.0\Microsoft.Extensions.FileProviders.Embedded.dll
 C:\Users\SUMAYANG\source\repos\FormulaOneApp\bin\Debug\net6.0\Microsoft.Extensions.Identity.Core.dll
 C:\Users\SUMAYANG\source\repos\FormulaOneApp\bin\Debug\net6.0\Microsoft.Extensions.Identity.Stores.dll
+C:\Users\SUMAYANG\source\repos\FormulaOneApp\bin\Debug\net6.0\RestSharp.dll

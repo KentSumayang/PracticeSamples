@@ -64,14 +64,14 @@ namespace FormulaOneApp.Controllers
 
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(new_user);
 
-                    var email_body = "Please Confirm your Email Address <a href=\"#URL#\">Click Here </a>";
+                    var email_body = "Please Confirm your Email Address <a href=+\"#URL#\">Click Here </a>";
 
                     // https://localhost:8080/auth/verifyemail/userid=sdad$code=
 
-                    var callback_url = Request.Scheme + "://" + Request.Host + Url.Action("Confirm Email","Auth", new { userId = new_user.Id, code = code });
+                    var callback_url = Request.Scheme + "://" + Request.Host + Url.Action("ConfirmEmail","Auth", new { userId = new_user.Id, code = code });
 
                     var body = email_body.Replace("#URL#",
-                        System.Text.Encodings.Web.HtmlEncoder.Default.Encode(callback_url));
+                        callback_url);
 
                     // SEND EMAIL
 
@@ -79,10 +79,10 @@ namespace FormulaOneApp.Controllers
 
                     if (result)
                     {
-                        return Ok("Email Verifcation Sent Successfully. Please Verify Your Email.");
+                        return Ok("Email Verification Sent Successfully. Please Verify Your Email.");
                     }
 
-                    return Ok("Please Request Verification Link.");
+                    return Ok(result);
 
                     // Generate token
                     /*var token = GenerateJwtToken(new_user);
@@ -161,7 +161,18 @@ namespace FormulaOneApp.Controllers
                         Result = false
                         
                     });
+                }
+                if (!existing_user.EmailConfirmed)
+                {
+                    return BadRequest(new AuthResult()
+                    {
+                        Errors = new List<string>()
+                        {
+                            "Email needs to be Confirmed."
+                        },
+                        Result = false
 
+                    });
                 }
                 var isCorrect = await _userManager.CheckPasswordAsync(existing_user, loginRequest.Password);
                 if (!isCorrect)
@@ -228,23 +239,25 @@ namespace FormulaOneApp.Controllers
         {
             // Create Client
 
-            var client = new RestClient(_configuration.GetSection("EmailConfig:API_URL").Value);
+            var options = new RestClientOptions("https://api.mailgun.net/v3");
 
-            var options = new RestClientOptions(_configuration.GetSection("EmailConfig:API_URL").Value);
+            options.Authenticator = new HttpBasicAuthenticator("api", _configuration.GetSection("EmailConfig:API_KEY").Value);
+
+            using var client = new RestClient(options)
+            {
+
+            };
 
             var request = new RestRequest("", Method.Post);
 
-            options.Authenticator = 
-                new HttpBasicAuthenticator("api", _configuration.GetSection("EmailConfig:API_KEY").Value);
-
-            request.AddParameter("domain", "sandbox5d7b1d092b134a318bcf73a202c0a573.mailgun.org");
+            request.AddParameter("domain", "sandboxcf83ba7340f4478692795c490a56f834.mailgun.org", ParameterType.UrlSegment);
             request.Resource = "{domain}/messages";
-            request.AddParameter("from", "Kent James Sandbox Mailgun<postmaster@sandbox5d7b1d092b134a318bcf73a202c0a573.mailgun.org>");
-            request.AddParameter("to", email);
+            request.AddParameter("from", "Kent James Sandbox Mailgun <postmaster@sandboxcf83ba7340f4478692795c490a56f834.mailgun.org>");
+            request.AddParameter("to", "hoibiffivufrou-6188@yopmail.com");
             request.AddParameter("subject", "Email Verification");
             request.AddParameter("text", body);
             request.Method = Method.Post;
-
+                
             var response = client.Execute(request);
 
             return response.IsSuccessful;
