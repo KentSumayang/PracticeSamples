@@ -64,11 +64,11 @@ namespace FormulaOneApp.Controllers
 
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(new_user);
 
-                    var email_body = "Please Confirm your Email Address <a href=+\"#URL#\">Click Here </a>";
+                    var email_body = "Please Confirm your Email Address <a href=\"#URL#\">Click Here </a>";
 
                     // https://localhost:8080/auth/verifyemail/userid=sdad$code=
 
-                    var callback_url = Request.Scheme + "://" + Request.Host + Url.Action("ConfirmEmail","Auth", new { userId = new_user.Id, code = code });
+                    var callback_url = Request.Scheme + "://" + Request.Host + Url.Action("ConfirmEmail","Auth", new { userId = new_user.Id ,code });
 
                     var body = email_body.Replace("#URL#",
                         callback_url);
@@ -135,7 +135,7 @@ namespace FormulaOneApp.Controllers
                 });
             }
 
-            code = Encoding.UTF8.GetString(Convert.FromBase64String(code));
+            //code = Encoding.UTF8.GetString(Convert.FromBase64String(code));
             var result = await _userManager.ConfirmEmailAsync(user, code);
             var status = result.Succeeded ? "Thank you for Confirming your Email." :"Confirmation Failed, please try again later.";
 
@@ -238,10 +238,13 @@ namespace FormulaOneApp.Controllers
         private bool SendEmail(string body, string email)
         {
             // Create Client
+            var api_key = _configuration.GetSection("EmailConfig:API_KEY").Value;
+            var api_url = _configuration.GetSection("EmailConfig:API_URL").Value;
 
-            var options = new RestClientOptions("https://api.mailgun.net/v3");
 
-            options.Authenticator = new HttpBasicAuthenticator("api", _configuration.GetSection("EmailConfig:API_KEY").Value);
+            var options = new RestClientOptions(api_url);
+
+            options.Authenticator = new HttpBasicAuthenticator("api",api_key);
 
             using var client = new RestClient(options)
             {
@@ -250,10 +253,10 @@ namespace FormulaOneApp.Controllers
 
             var request = new RestRequest("", Method.Post);
 
-            request.AddParameter("domain", "sandboxcf83ba7340f4478692795c490a56f834.mailgun.org", ParameterType.UrlSegment);
+            request.AddParameter("domain", "sandboxae6dfe0bce7d406da0c838307fdb0959.mailgun.org", ParameterType.UrlSegment);
             request.Resource = "{domain}/messages";
-            request.AddParameter("from", "Kent James Sandbox Mailgun <postmaster@sandboxcf83ba7340f4478692795c490a56f834.mailgun.org>");
-            request.AddParameter("to", "hoibiffivufrou-6188@yopmail.com");
+            request.AddParameter("from", "Kent James Sandbox Mailgun <postmaster@sandboxae6dfe0bce7d406da0c838307fdb0959.mailgun.org>");
+            request.AddParameter("to", "meujoicaffeifei-2816@yopmail.com");
             request.AddParameter("subject", "Email Verification");
             request.AddParameter("text", body);
             request.Method = Method.Post;
