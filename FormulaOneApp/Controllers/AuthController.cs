@@ -234,7 +234,7 @@ namespace FormulaOneApp.Controllers
 
             return jwtToken;
         }
-
+         
         private bool SendEmail(string body, string email)
         {
             // Create Client
@@ -246,17 +246,14 @@ namespace FormulaOneApp.Controllers
 
             options.Authenticator = new HttpBasicAuthenticator("api",api_key);
 
-            using var client = new RestClient(options)
-            {
-
-            };
+            using var client = new RestClient(options);
 
             var request = new RestRequest("", Method.Post);
 
-            request.AddParameter("domain", "sandboxae6dfe0bce7d406da0c838307fdb0959.mailgun.org", ParameterType.UrlSegment);
+            request.AddParameter("domain", "sandbox8bdbb48791f74fdd8933000d00e0f2e5.mailgun.org", ParameterType.UrlSegment);
             request.Resource = "{domain}/messages";
-            request.AddParameter("from", "Kent James Sandbox Mailgun <postmaster@sandboxae6dfe0bce7d406da0c838307fdb0959.mailgun.org>");
-            request.AddParameter("to", "meujoicaffeifei-2816@yopmail.com");
+            request.AddParameter("from", "Kent James Sandbox Mailgun <postmaster@sandbox8bdbb48791f74fdd8933000d00e0f2e5.mailgun.org>");
+            request.AddParameter("to", email);
             request.AddParameter("subject", "Email Verification");
             request.AddParameter("text", body);
             request.Method = Method.Post;
