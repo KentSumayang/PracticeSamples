@@ -1,6 +1,7 @@
 ﻿using FormulaOneApp.Configurations;
 using FormulaOneApp.DTOs;
 using FormulaOneApp.Models;
+using FormulaOneApp.Models.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -224,7 +225,7 @@ namespace FormulaOneApp.Controllers
                     new Claim(JwtRegisteredClaimNames.Iat, DateTime.Now.ToUniversalTime().ToString())
                 }),
 
-                Expires = DateTime.Now.AddHours(1),
+                Expires = DateTime.UtcNow.Add(TimeSpan.Parse(_configuration.GetSection("JwtConfig:ExpiryTimeFrame").Value)), 
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
 
             };
