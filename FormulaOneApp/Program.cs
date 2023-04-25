@@ -22,7 +22,7 @@ builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection(("JwtConf
 
 byte[] key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("JwtConfig:Secret").Value);
 
-var tokenValidationParameter = new TokenValidationParameters()
+var tokenValidationParams = new TokenValidationParameters()
 {
     ValidateIssuerSigningKey = true,
     IssuerSigningKey = new SymmetricSecurityKey(key),
@@ -41,9 +41,9 @@ builder.Services.AddAuthentication(options =>
 .AddJwtBearer(jwt =>
 {
     jwt.SaveToken = true;
-    jwt.TokenValidationParameters = tokenValidationParameter;
+    jwt.TokenValidationParameters = tokenValidationParams;
 });
-
+builder.Services.AddSingleton(tokenValidationParams);
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 options.SignIn.RequireConfirmedEmail = false).AddEntityFrameworkStores<AppDbContext>();
 var app = builder.Build();

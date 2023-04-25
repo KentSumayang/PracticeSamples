@@ -1,10 +1,12 @@
 ﻿using FormulaOneApp.Configurations;
+using FormulaOneApp.Data;
 using FormulaOneApp.DTOs;
 using FormulaOneApp.Models;
 using FormulaOneApp.Models.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using RestSharp;
@@ -21,12 +23,24 @@ namespace FormulaOneApp.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly AppDbContext _context;
+        private readonly TokenValidationParameters _tokenValidationParameters;
        // private readonly JwtConfig _jwtConfig;
 
-        public AuthController(UserManager<IdentityUser> userManager, IConfiguration configuration)//JwtConfig jwtConfig
+        public AuthController(
+            UserManager<IdentityUser> userManager,
+            IConfiguration configuration, 
+            AppDbContext context,
+            TokenValidationParameters tokenValidationParameters
+            //JwtConfig jwtConfig
+            )
+
         {
             _userManager = userManager;
             _configuration = configuration;
+            _context = context;
+            _tokenValidationParameters = tokenValidationParameters;
+            
             //_jwtConfig = jwtConfig;
         }
 
@@ -83,7 +97,7 @@ namespace FormulaOneApp.Controllers
                         return Ok("Email Verification Sent Successfully. Please Verify Your Email.");
                     }
 
-                    return Ok(result);
+                    return Ok("Please request a verification email.");
 
                     // Generate token
                     /*var token = GenerateJwtToken(new_user);
@@ -157,7 +171,7 @@ namespace FormulaOneApp.Controllers
                     {
                         Errors = new List<string>()
                         {
-                            "Invalid Payload"
+                            "Invalid Payload. User not found"
                         }, 
                         Result = false
                         
@@ -187,12 +201,8 @@ namespace FormulaOneApp.Controllers
                         Result= false
                     });
                 }
-                var jwtToken = GenerateJwtToken(existing_user);
-                return Ok(new AuthResult()
-                {
-                    Token = jwtToken,
-                    Result = true
-                });
+                var jwtToken = await GenerateJwtToken(existing_user);
+                return Ok(jwtToken);
 
 
             }
@@ -207,7 +217,7 @@ namespace FormulaOneApp.Controllers
             
         }
 
-        private string GenerateJwtToken (IdentityUser user)
+        private async Task<AuthResult> GenerateJwtToken (IdentityUser user)
         {
             var jwtTokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(_configuration.GetSection("JwtConfig:Secret").Value);
@@ -233,9 +243,182 @@ namespace FormulaOneApp.Controllers
             var token = jwtTokenHandler.CreateToken(tokenDescriptor);
             var jwtToken = jwtTokenHandler.WriteToken(token);
 
-            return jwtToken;
+            var refreshToken = new RefreshToken()
+            {
+                JwtId = token.Id,
+                Token = RandomStringGenerator(24),// Generate Refresh Token
+                AddedDate = DateTime.UtcNow,
+                ExpiryDate = DateTime.UtcNow.AddMonths(6),
+                IsRevoked = false,
+                IsUsed = false,
+                UserId = user.Id,
+            };
+            await _context.RefreshTokens.AddAsync(refreshToken);
+            await _context.SaveChangesAsync();
+
+            return new AuthResult()
+            {
+                Token = jwtToken,
+                RefreshToken = refreshToken.Token,
+                Result = true
+            };
         }
-         
+
+        [HttpPost("RefreshToken")] 
+        public async Task<IActionResult> RefreshToken ([FromBody] TokenRequest tokenRequest)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await VerifyAndGenerateToken(tokenRequest);
+                if (result == null)
+                {
+                    return BadRequest(new AuthResult()
+                    {
+                        Errors = new List<string>()
+                    {
+                        "Invalid token."
+                    },
+                        Result = false
+                    });
+                }
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(new AuthResult()
+                {
+                    Errors = new List<string>()
+                    {
+                        "Invalid Parameters."
+                    },
+                    Result = false
+                });
+            }
+        }
+
+        private async Task<AuthResult> VerifyAndGenerateToken(TokenRequest tokenRequest)
+        {
+            var jwtTokenHandler = new JwtSecurityTokenHandler();
+            try
+            {
+                _tokenValidationParameters.ValidateLifetime = false; // for testing
+                var tokenInVerification = jwtTokenHandler.ValidateToken(tokenRequest.Token, _tokenValidationParameters, out var validatedToken);
+                if (validatedToken is JwtSecurityToken jwtSecurityToken)
+                {
+                    var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
+                    if (result == false)
+                    {
+                        return null;
+                    }
+                }
+
+                var utcExpiryDate = long.Parse(tokenInVerification.Claims.FirstOrDefault(x=>x.Type == JwtRegisteredClaimNames.Exp).Value);
+                var expiryDate = UnixTimeStampToDate(utcExpiryDate);
+                if (expiryDate > DateTime.Now)
+                {
+                    return new AuthResult()
+                    {
+                        Result = false,
+                        Errors = new List<string>()
+                        {
+                            "Expired tokens."
+                        }
+                    };
+                }
+
+                var storedToken = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == tokenRequest.RefreshToken);
+                if (storedToken == null)
+                {
+                    return new AuthResult()
+                    {
+                        Result = false,
+                        Errors = new List<string>()
+                        {
+                            "Invalid tokens."
+                        }
+                    };
+
+                }
+
+                if (storedToken.IsUsed)
+                {
+                    return new AuthResult()
+                    {
+                        Result = false,
+                        Errors = new List<string>()
+                        {
+                            "Invalid tokens."
+                        }
+                    };  
+                }
+
+                if (storedToken.IsRevoked)
+                {
+                    return new AuthResult()
+                    {
+                        Result = false,
+                        Errors = new List<string>()
+                        {
+                            "Invalid tokens."
+                        }
+                    };
+                }
+
+                var jti = tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
+                if (storedToken.JwtId != jti)
+                {
+                    return new AuthResult()
+                    {
+                        Result = false,
+                        Errors = new List<string>()
+                        {
+                            "Invalid tokens."
+                        }
+                    };
+                }
+
+                if (storedToken.ExpiryDate == DateTime.UtcNow)
+                {
+                    return new AuthResult()
+                    {
+                        Result = false,
+                        Errors = new List<string>()
+                        {
+                            "Expired tokens."
+                        }
+                    };
+                }
+
+                storedToken.IsUsed = true;
+                _context.RefreshTokens.Update(storedToken);
+                await _context.SaveChangesAsync();
+
+                var dbUser = await _userManager.FindByIdAsync(storedToken.UserId);
+
+                return await GenerateJwtToken(dbUser);
+
+            }
+            catch (Exception)
+            {
+
+                return new AuthResult()
+                {
+                    Result = false,
+                    Errors = new List<string>()
+                        {
+                            "Server Error."
+                        }
+                };
+            }
+
+        }
+        private DateTime UnixTimeStampToDate(long unixTimeStamp)
+        {
+            var dateTimeVal = new DateTime(1970,1,1,0,0,0,0,DateTimeKind.Utc);
+            dateTimeVal = dateTimeVal.AddSeconds(unixTimeStamp).ToUniversalTime();
+            return dateTimeVal;
+        }
+
         private bool SendEmail(string body, string email)
         {
             // Create Client
@@ -265,6 +448,13 @@ namespace FormulaOneApp.Controllers
 
 
 
+        }
+        private string RandomStringGenerator(int length)
+        {
+            var random = new Random();
+            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz_!@#$%^&*()";
+
+            return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
     }
