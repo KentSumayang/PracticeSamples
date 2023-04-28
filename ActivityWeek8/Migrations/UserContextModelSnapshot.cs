@@ -43,11 +43,16 @@ namespace ActivityWeek8.Migrations
                     b.Property<sbyte>("Status")
                         .HasColumnType("tinyint");
 
+                    b.Property<int>("UserOtherInfoId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasColumnType("varchar(5)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserOtherInfoId");
 
                     b.ToTable("UserInfos");
                 });
@@ -80,6 +85,17 @@ namespace ActivityWeek8.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("UserOtherInfos");
+                });
+
+            modelBuilder.Entity("ActivityWeek8.Models.UserInfo", b =>
+                {
+                    b.HasOne("ActivityWeek8.Models.UserOtherInfo", "UserOtherInfo")
+                        .WithMany()
+                        .HasForeignKey("UserOtherInfoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UserOtherInfo");
                 });
 #pragma warning restore 612, 618
         }

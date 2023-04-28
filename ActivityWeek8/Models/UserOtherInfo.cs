@@ -1,11 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ActivityWeek8.Models
 {
     public class UserOtherInfo
     {
-        public int Id { get; set; }
+        [Key]public int Id { get; set; }
         [Column(TypeName = "int")] public int Age { get; set; }
         [Column(TypeName = "varchar(15)")] public string Nationality { get; set; }
         [Column(TypeName = "varchar(20)")] public string City { get; set; }
