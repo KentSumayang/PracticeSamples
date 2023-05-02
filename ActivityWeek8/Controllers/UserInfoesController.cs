@@ -66,101 +66,150 @@ namespace ActivityWeek8.Controllers
         [HttpPost("CreateUser")]
         public async Task<ActionResult<UserInfo>> PostUserInfo(UserInfo userInfo)
         {
-            if (_context.UserInfos == null)
+            if (_context.UserInfos != null)
             {
-                return Problem("Table is empty. No data available");
+                await _context.UserInfos.AddAsync(userInfo);
+                userInfo.Status = 1;
+                await _context.SaveChangesAsync();
+
+                return Ok("New Account is Created.");
             }
-
-            await _context.UserInfos.AddAsync(userInfo);
-            userInfo.Status = 1;
-            await _context.SaveChangesAsync();
-
-            return Ok(userInfo);
+            return Problem("Table is empty. No data available");
+            
         }
 
         [HttpPost("GetInfoViaUsernameAndPassword")]
         public async Task<ActionResult<UserInfo>> GetInformation(string username, string password)
         {
-            var exist_user = await _context.UserInfos
+            if (_context.UserInfos != null)
+            {
+                var exist_user = await _context.UserInfos
                 .Where(x => x.Username == username)
                 .Where(x => x.Password == password)
+                .Include(a => a.UserOtherInfo)
                 .FirstOrDefaultAsync();
 
-            var properties = await _context.UserInfos
-                .Include(a => a.UserOtherInfo)
-                .Where(x => x.Username == username)
-                .ToListAsync();
-
-
-            if (exist_user != null)
-            {
                 if (exist_user != null)
                 {
-                    if (exist_user.Status == 0)
+                    if (exist_user != null)
                     {
-                        return BadRequest("Invalid. Account has been Deactivated.");
+                        if (exist_user.Status == 0)
+                        {
+                            return Ok("Invalid. Account has been Deactivated.");
+                        }
+                        return Ok(exist_user);
                     }
-                    return Ok(properties);
+                    return BadRequest("Username or Password is Invalid");
                 }
                 return BadRequest("Username or Password is Invalid");
             }
-            return BadRequest("Username or Password is Invalid");
+            return NotFound();
+
+            
         }
 
         [HttpPost("DeactivateUser")]
         public async Task<ActionResult<UserInfo>> SetUserStatusDeactive(string username, string password)
         {
-            var exist_user = await _context.UserInfos
+            
+
+            if (_context.UserInfos != null)
+            {
+                var exist_user = await _context.UserInfos
                 .Where(x => x.Username == username)
                 .Where(x => x.Password == password)
                 .FirstOrDefaultAsync();
 
-            if (exist_user != null)
-            {
                 if (exist_user != null)
                 {
-                    if (exist_user.Status == 0)
+                    if (exist_user != null)
                     {
-                        return Ok("Account is already inactive.");
-                    }
-                    exist_user.Status = 0;
-                    await _context.SaveChangesAsync();
+                        if (exist_user.Status == 0)
+                        {
+                            return Ok("Account is already inactive.");
+                        }
+                        exist_user.Status = 0;
+                        await _context.SaveChangesAsync();
 
-                    return Ok("Account has been deactivated.");
+                        return Ok("Account has been deactivated.");
+                    }
+                    return BadRequest("Username or Password is Invalid");
                 }
                 return BadRequest("Username or Password is Invalid");
             }
-            return BadRequest("Username or Password is Invalid");
+            return NotFound();
+            
         }
 
         [HttpPost("ReactivateUser")]
         public async Task<ActionResult<UserInfo>> SetUserStatusActive(string username, string password)
         {
-            var exist_user = await _context.UserInfos
+            
+
+            if (_context.UserInfos != null)
+            {
+                var exist_user = await _context.UserInfos
                 .Where(x => x.Username == username)
                 .Where(x => x.Password == password)
                 .FirstOrDefaultAsync();
 
-            if (exist_user != null)
-            {
                 if (exist_user != null)
                 {
-                    if (exist_user.Status == 1)
+                    if (exist_user != null)
                     {
-                        return Ok("Account is already active.");
-                    }
-                    exist_user.Status = 1;
-                    await _context.SaveChangesAsync();
+                        if (exist_user.Status == 1)
+                        {
+                            return Ok("Account is already active.");
+                        }
+                        exist_user.Status = 1;
+                        await _context.SaveChangesAsync();
 
-                    return Ok("Account has been reactivated.");
+                        return Ok("Account has been reactivated.");
+                    }
+                    return BadRequest("Username or Password is Invalid");
                 }
                 return BadRequest("Username or Password is Invalid");
             }
-            return BadRequest("Username or Password is Invalid");
+            return NotFound();
         }
+
+           
         private bool UserInfoExists(int id)
         {
             return (_context.UserInfos?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+
+        [HttpDelete("DeleteUserInfo")]
+        public async Task<ActionResult<UserInfo>> DeleteUserInfo(string username, string password)
+        {
+            try
+            {
+                if (_context.UserInfos != null)
+                {
+                    if (username != null || password != null)
+                    {
+                        var exist_user = await _context.UserInfos
+                       .Where(x => x.Username == username)
+                       .Where(x => x.Password == password)
+                       .FirstOrDefaultAsync();
+
+                        _context.UserInfos.Remove(exist_user);
+
+                        await _context.SaveChangesAsync();
+
+                        return Ok("User" + exist_user.Username + " has been deleted.");
+                    }
+                    return NotFound();
+                }
+                return NotFound();  
+            }
+            catch (Exception)
+            {
+
+                return NotFound("User not found.");
+            }
+            
+        }
     }
+    
 }

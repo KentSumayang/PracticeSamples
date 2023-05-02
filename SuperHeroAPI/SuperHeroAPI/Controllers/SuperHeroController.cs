@@ -10,9 +10,9 @@ namespace SuperHeroAPI.Controllers
     {
         private readonly ISuperHeroService _superHeroService;
 
-        public SuperHeroController(ISuperHeroService superHeroService)
+        public  SuperHeroController(ISuperHeroService superHeroService)
         {
-            _superHeroService = superHeroService;
+             _superHeroService = superHeroService;
         }
         [HttpGet("GetAllHeroes")]
         public async Task<ActionResult<List<SuperHero>>> GetAllHeroes()
@@ -44,7 +44,7 @@ namespace SuperHeroAPI.Controllers
         [HttpDelete("DeleteHero")]
         public async Task<ActionResult<List<SuperHero>>> DeleteHero(int id)
         {
-            var result =_superHeroService.DeleteHero(id);
+            var result = _superHeroService.DeleteHero(id);
             if (result == null)
                 return NotFound("Hero not found.");
 
