@@ -1,6 +1,7 @@
 ﻿using ActivityWeek8.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Protocol;
 
 namespace ActivityWeek8.Controllers
 {
@@ -16,8 +17,8 @@ namespace ActivityWeek8.Controllers
             _context = context;
         }
 
-        [HttpGet("GetUserInfo")]
-        public async Task<ActionResult<IEnumerable<UserInfo>>> Get()
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<UserInfo>>> GetUserInfo()
         {
             if (_context.UserInfos == null)
             {
@@ -31,7 +32,7 @@ namespace ActivityWeek8.Controllers
 
         // PUT: api/UserInfoes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("EditUserInfo")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> PutUserInfo(UserInfo userInfo)
         {
 
@@ -71,8 +72,7 @@ namespace ActivityWeek8.Controllers
                 await _context.UserInfos.AddAsync(userInfo);
                 userInfo.Status = 1;
                 await _context.SaveChangesAsync();
-
-                return Ok("New Account is Created.");
+                return Ok(userInfo);
             }
             return Problem("Table is empty. No data available");
             
@@ -93,11 +93,11 @@ namespace ActivityWeek8.Controllers
                 {
                     if (exist_user != null)
                     {
-                        if (exist_user.Status == 0)
+                        if (exist_user.Status != 0)
                         {
-                            return Ok("Invalid. Account has been Deactivated.");
+                            return Ok(exist_user);
                         }
-                        return Ok(exist_user);
+                        return BadRequest("Invalid Action. Account is already disabled.");
                     }
                     return BadRequest("Username or Password is Invalid");
                 }
@@ -124,14 +124,13 @@ namespace ActivityWeek8.Controllers
                 {
                     if (exist_user != null)
                     {
-                        if (exist_user.Status == 0)
+                        if (exist_user.Status != 0)
                         {
-                            return Ok("Account is already inactive.");
+                            exist_user.Status = 0;
+                            await _context.SaveChangesAsync();
+                            return Ok("Account has been deactivated.");
                         }
-                        exist_user.Status = 0;
-                        await _context.SaveChangesAsync();
-
-                        return Ok("Account has been deactivated.");
+                        return Ok("Account is already inactive.");
                     }
                     return BadRequest("Username or Password is Invalid");
                 }
@@ -157,26 +156,19 @@ namespace ActivityWeek8.Controllers
                 {
                     if (exist_user != null)
                     {
-                        if (exist_user.Status == 1)
+                        if (exist_user.Status != 1)
                         {
-                            return Ok("Account is already active.");
+                            exist_user.Status = 1;
+                            await _context.SaveChangesAsync();
+                            return Ok("Account has been reactivated.");
                         }
-                        exist_user.Status = 1;
-                        await _context.SaveChangesAsync();
-
-                        return Ok("Account has been reactivated.");
+                        return BadRequest("Account is already active.");
                     }
                     return BadRequest("Username or Password is Invalid");
                 }
                 return BadRequest("Username or Password is Invalid");
             }
             return NotFound();
-        }
-
-           
-        private bool UserInfoExists(int id)
-        {
-            return (_context.UserInfos?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 
         [HttpDelete("DeleteUserInfo")]
@@ -208,7 +200,10 @@ namespace ActivityWeek8.Controllers
 
                 return NotFound("User not found.");
             }
-            
+        }
+        private bool UserInfoExists(int id)
+        {
+            return (_context.UserInfos?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
     

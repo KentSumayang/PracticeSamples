@@ -1,6 +1,8 @@
 global using SuperHeroAPI.Models;
 global using SuperHeroAPI.Data;
 using SuperHeroAPI.Services.SuperHeroService;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
