@@ -16,6 +16,19 @@ namespace ActivityWeek9.Controllers
         {
             _context = context;
         }
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Notification>>> GetAllNotifications()
+        {
+            var result = await _context._Notifications
+                    .ToListAsync();
+
+            if (_context._Notifications != null)
+            {
+                return result;
+            }
+            return NotFound("No Data Found.");
+
+        }
         [HttpGet("ViewNotifications")]
         public async Task<ActionResult<IEnumerable<Notification>>> ViewNotifications(int id, string username, string password)
         {
@@ -30,7 +43,7 @@ namespace ActivityWeek9.Controllers
             {
                 return BadRequest("Invalid. For administrators only.");
             }
-            if (user.Username != username && user.Password != password)
+            if (user.Username != username || user.Password != password)
             {
                 return BadRequest("Incorrect Username or Password");
             }
@@ -50,6 +63,7 @@ namespace ActivityWeek9.Controllers
                 .Where(x => x.IsRead == false)
                 .ExecuteUpdateAsync(x => x
                 .SetProperty(p => p.IsRead, true));
+
             await _context.SaveChangesAsync();
 
             return result;

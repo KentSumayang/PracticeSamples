@@ -7,7 +7,7 @@ namespace ActivityWeek9.Data
     public class AppDbContext : DbContext
     {
         private readonly IConfiguration _configuration;
-        public AppDbContext (IConfiguration configuration)
+        public AppDbContext(IConfiguration configuration)
         {
             _configuration = configuration;
         }

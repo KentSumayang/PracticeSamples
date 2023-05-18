@@ -1,3 +1,4 @@
+using ApiCorrelations.Configurations.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ApiCorrelations.Controllers
@@ -10,17 +11,22 @@ namespace ApiCorrelations.Controllers
         {
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
     };
-
+        private readonly ICorrelationIdGenerator _correlationIdGenerator;
         private readonly ILogger<WeatherForecastController> _logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(
+            ICorrelationIdGenerator correlationIdGenerator,
+            ILogger<WeatherForecastController> logger)
         {
             _logger = logger;
+            _correlationIdGenerator = correlationIdGenerator;
         }
 
         [HttpGet(Name = "GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get()
         {
+            _logger.LogInformation("CorrelationId : {correlationId}", _correlationIdGenerator.Get());
+
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),

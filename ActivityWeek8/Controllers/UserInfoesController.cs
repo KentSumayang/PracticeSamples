@@ -56,7 +56,7 @@ namespace ActivityWeek8.Controllers
                 {
                     throw;
                 }
-            }
+              }
 
             return Ok(userInfo);
         }

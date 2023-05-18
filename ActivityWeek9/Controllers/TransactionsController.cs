@@ -103,8 +103,8 @@ namespace ActivityWeek9.Controllers
                     User = account,
                     Transaction = transaction,
                     Message =
-                        "Current Balance : " + balance + "." + 
-                        account.Username + " has deposited: " + amount + " amount to account number: " + account.Id + "." +
+                        "Current Balance : " + balance + ".\n" + 
+                        account.Username + " has deposited: " + amount + " amount to account number: " + account.Id + ".\n" +
                         "New Balance: " + new_balance,
                     IsRead = false
                 };
@@ -150,8 +150,8 @@ namespace ActivityWeek9.Controllers
                     User = account,
                     Transaction = transaction,
                     Message =
-                        "Current Balance : " + balance + "."+
-                        account.Username + " has withdrawn: " + amount + " amount to account number: " + account.Id + "."+
+                        "Current Balance : " + balance + ".\n" +
+                        account.Username + " has withdrawn: " + amount + " amount to account number: " + account.Id + ".\n" +
                         "New Balance: " + new_balance,
                     IsRead = false
                 };

@@ -44,7 +44,7 @@ namespace ActivityWeek9.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("_Notifications", (string)null);
+                    b.ToTable("_Notifications");
                 });
 
             modelBuilder.Entity("ActivityWeek9.Models.Transaction", b =>
@@ -69,7 +69,7 @@ namespace ActivityWeek9.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("_Transactions", (string)null);
+                    b.ToTable("_Transactions");
                 });
 
             modelBuilder.Entity("ActivityWeek9.Models.User", b =>
@@ -79,7 +79,7 @@ namespace ActivityWeek9.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("Balance")
-                        .HasColumnType("decimal(65,30)");
+                        .HasColumnType("decimal(7,2)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
@@ -95,7 +95,7 @@ namespace ActivityWeek9.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("_Users", (string)null);
+                    b.ToTable("_Users");
                 });
 
             modelBuilder.Entity("ActivityWeek9.Models.Notification", b =>
